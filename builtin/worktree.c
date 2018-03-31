@@ -444,6 +444,8 @@ static int add(int ac, const char **av, const char *prefix)
 
 	if (new_branch) {
 		struct child_process cp = CHILD_PROCESS_INIT;
+
+		fprintf_ln(stderr, _("Creating branch '%s'"), new_branch);
 		cp.git_cmd = 1;
 		argv_array_push(&cp.args, "branch");
 		if (new_branch_force)
