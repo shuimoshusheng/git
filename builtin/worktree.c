@@ -27,6 +27,7 @@ struct add_opts {
 	int detach;
 	int checkout;
 	int keep_locked;
+	int checkout_existing_branch;
 };
 
 static int show_only;
@@ -316,6 +317,8 @@ static int add_worktree(const char *path, const char *refname,
 	if (ret)
 		goto done;
 
+	if (opts->checkout_existing_branch)
+		  fprintf_ln(stderr, _("Checking out branch '%s'"), refname);
 	if (opts->checkout) {
 		cp.argv = NULL;
 		argv_array_clear(&cp.args);
@@ -363,11 +366,23 @@ done:
 	return ret;
 }
 
-static const char *dwim_branch(const char *path, const char **new_branch)
+static const char *dwim_branch(const char *path, const char **new_branch,
+			       int *checkout_existing_branch)
 {
 	int n;
 	const char *s = worktree_basename(path, &n);
-	*new_branch = xstrndup(s, n);
+	const char *branchname = xstrndup(s, n);
+	struct strbuf ref = STRBUF_INIT;
+
+	if (!strbuf_check_branch_ref(&ref, branchname) &&
+	    ref_exists(ref.buf)) {
+		*checkout_existing_branch = 1;
+		strbuf_release(&ref);
+		UNLEAK(branchname);
+		return branchname;
+	}
+
+	*new_branch = branchname;
 	if (guess_remote) {
 		struct object_id oid;
 		const char *remote =
@@ -429,7 +444,8 @@ static int add(int ac, const char **av, const char *prefix)
 	}
 
 	if (ac < 2 && !new_branch && !opts.detach) {
-		const char *s = dwim_branch(path, &new_branch);
+		const char *s = dwim_branch(path, &new_branch,
+					    &opts.checkout_existing_branch);
 		if (s)
 			branch = s;
 	}
