@@ -2127,6 +2127,10 @@ GIT-PERL-HEADER: $(PERL_HEADER_TEMPLATE) GIT-PERL-DEFINES Makefile
 	    $< >$@+ && \
 	mv $@+ $@
 
+.PHONY: perllibdir
+perllibdir:
+	@echo '$(perllibdir_SQ)'
+
 .PHONY: gitweb
 gitweb:
 	$(QUIET_SUBDIR0)gitweb $(QUIET_SUBDIR1) all
